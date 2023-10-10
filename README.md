@@ -19,7 +19,7 @@ Welcome to our shell collaboration project! This README will guide you through t
 ## Authors
 
 - [@Okoye Emmanuel Obiajulu](https://github.com/Obiajulu-gif/)
-- [@Kuda-T](https://github.com/Kudatee007/)
+- [@Timilehin Kudaisi](https://github.com/Kudatee007/)
 
 ## Tech Stack
 
