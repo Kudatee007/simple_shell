@@ -1,5 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include "main.h"
 
 /**
  * main - A beautiful code that passes the Betty checks.
@@ -9,13 +8,13 @@
 
 int main(void)
 {
-	int timi, emma;
-	int sum;
+int timi, emma;
+int sum;
 
-	timi = 4;
-	emma = 12;
+timi = 4;
+emma = 12;
 
-	sum = timi + emma;
+sum = timi + emma;
 
-	return (sum);
+return (sum);
 }
