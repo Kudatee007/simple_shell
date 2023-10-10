@@ -2,12 +2,3 @@
 *.vscode/
 .idea/
 
-PID_&_PPID.c
-arguments.c
-executing_prog.c
-create_processes.c
-shell.c
-wait.c
-*.exe
-*.o
-hello_world.sh
