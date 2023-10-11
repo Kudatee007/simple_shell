@@ -10,10 +10,13 @@ ssize_t read_line(char **line, size_t *len)
     if (read == -1)
     {
         printf("\n");
+        exit(EXIT_SUCCESS);
     }
+
     return read;
 }
 
+/* Function to execute a command */
 void execute_command(char *line)
 {
     pid_t pid;
@@ -32,11 +35,11 @@ void execute_command(char *line)
     if (pid == 0)
     {
         /* Child process */
-        if (execve(argv[0], argv, NULL) == -1) /* Pass argv instead of NULL */
+        if (execve(argv[0], argv, NULL) == -1)
         {
-            perror("Error:");
+            perror(argv[0]);
+            exit(EXIT_FAILURE);
         }
-        exit(EXIT_FAILURE);
     }
     else
     {
