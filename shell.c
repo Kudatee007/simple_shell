@@ -1,16 +1,34 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include "main.h"
 
-int main(void)
+int main()
 {
-    char *line = NULL;
-    size_t len = 0;
+    char command[100];
+    pid_t pid;
+    int status;
 
     while (1)
     {
-        read_line(&line, &len);
-        execute_command(line);
-    }
+        printf("#cisfun$ ");
+        scanf("%s", command);
 
-    free(line);
-    return 0;
+        pid = fork();
+        if (pid == -1)
+        {
+            perror("Error:");
+            return 1;
+        }
+        else if (pid == 0)
+        {
+            execl(command, command, NULL);
+            perror("exec");
+            exit(1);
+        }
+        else
+        {
+            wait(&status);
+        }
+    }
+    return (0);
 }
