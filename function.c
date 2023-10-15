@@ -87,32 +87,77 @@ char *find_command(char *command)
  * execute_ls - executes the ls command
  * @args: array of arguments
  */
-void execute_ls(char **args)
-{
-    pid_t pid;
-    int status;
 
-    /* create a child process to execute the ls command */
-    pid = fork();
-    if (pid == -1)
+void print_mode(mode_t mode)
+{
+    switch (mode & S_IFMT)
     {
-        perror("Error");
-        free(args);
-        return;
+    case S_IFBLK:
+        printf("b");
+        break;
+    case S_IFCHR:
+        printf("c");
+        break;
+    case S_IFDIR:
+        printf("d");
+        break;
+    case S_IFIFO:
+        printf("p");
+        break;
+    case S_IFLNK:
+        printf("l");
+        break;
+    case S_IFREG:
+        printf("-");
+        break;
+    case S_IFSOCK:
+        printf("s");
+        break;
+    default:
+        printf("?");
+        break;
     }
-    else if (pid == 0)
+    printf((mode & S_IRUSR) ? "r" : "-");
+    printf((mode & S_IWUSR) ? "w" : "-");
+    printf((mode & S_IXUSR) ? "x" : "-");
+    printf((mode & S_IRGRP) ? "r" : "-");
+    printf((mode & S_IWGRP) ? "w" : "-");
+    printf((mode & S_IXGRP) ? "x" : "-");
+    printf((mode & S_IROTH) ? "r" : "-");
+    printf((mode & S_IWOTH) ? "w" : "-");
+    printf((mode & S_IXOTH) ? "x" : "-");
+}
+
+void _ls(char **path)
+{
+    char *name;
+    char full_path[PATH_MAX];
+    struct stat st;
+    struct dirent *entry;
+    DIR *dir = opendir(*path);
+    if (dir == NULL)
     {
-        if (execvp(args[0], args) == -1)
+        perror("opendir");
+        exit(1);
+    }
+    while ((entry = readdir(dir)) != NULL)
+    {
+        name = entry->d_name;
+        if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0)
         {
-            perror("Error");
-            free(args);
-            exit(EXIT_FAILURE);
+            continue;
         }
+        sprintf(full_path, "%s/%s", *path, name);
+        if (lstat(full_path, &st) == -1)
+        {
+            perror("lstat");
+            exit(1);
+        }
+        print_mode(st.st_mode);
+        printf(" %ld ", st.st_size);
+        printf("%s\n", name);
     }
-    else
-    {
-        wait(&status);
-    }
+    closedir(dir);
 }
 
 /**
@@ -218,7 +263,6 @@ char *_strtok(char *str, const char *delim)
     }
 }
 
-
 /**
  * _setenv - sets an environment variable
  * @args: array of arguments
@@ -257,6 +301,11 @@ void _unsetenv(char **args)
     }
 }
 
+/**
+ * _cd - changes the current working directory
+ * @path: path to change to
+ * Return: 0 on success, -1 on failure
+ */
 int _cd(char *path)
 {
     char old_path[MAX_PATH];

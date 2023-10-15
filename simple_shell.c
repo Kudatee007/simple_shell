@@ -56,13 +56,18 @@ int main(int argc, char **argv)
             line[read - 1] = '\0';
             /* split the line into arguments */
             args = split_line(line);
+
+/*********************i AM HAVING ISSUE HERE ***********************/
             if (strcmp(args[0], "ls") == 0)
             {
-                /* execute the ls command */
-                execute_ls(args);
-                /* free the arguments */
-                free(args);
-                continue;
+                /* if the command is "ls", use the full path to the command */
+                char *full_path = "/bin/ls";
+                if (execv(full_path, args) == -1)
+                {
+                    perror("Error");
+                    free(args);
+                    exit(EXIT_FAILURE);
+                }
             }
 
             if (strcmp(args[0], "exit") == 0)
