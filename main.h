@@ -15,6 +15,13 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+/*  */
+char **split_string(char *str, const char *delim, int *num_tokens);
+char *build_path(char *dir, char *cmd);
+char *find_path(char *cmd, char **env);
+void print_env(char **env);
+int _setenv(const char *name, const char *value, int overwrite);
+int _unsetenv(const char *name);
 /**
  * 1. MAX_PATH_LENGTH - Maximum Path Length
  * 2. MAX_FILENAME_LENGTH - Maximum Filename Length

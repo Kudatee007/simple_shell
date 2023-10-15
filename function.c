@@ -1,0 +1,315 @@
+#include "simple_shell.h"
+
+/**
+ * split_line - splits a line into tokens
+ * @line: line to split
+ * Return: array of tokens
+ */
+char **split_line(char *line)
+{
+    int bufsize = TOK_BUFSIZE, position = 0;
+    char **tokens = malloc(bufsize * sizeof(char *));
+    char *token = NULL;
+
+    if (!tokens)
+    {
+        fprintf(stderr, "hsh: allocation error\n");
+        exit(EXIT_FAILURE);
+    }
+
+    token = _strtok(line, TOK_DELIM);
+    while (token != NULL)
+    {
+        tokens[position] = token;
+        position++;
+
+        if (position >= bufsize)
+        {
+            bufsize += TOK_BUFSIZE;
+            tokens = realloc(tokens, bufsize * sizeof(char *));
+            if (!tokens)
+            {
+                fprintf(stderr, "hsh: allocation error\n");
+                exit(EXIT_FAILURE);
+            }
+        }
+        token = _strtok(NULL, TOK_DELIM);
+    }
+    tokens[position] = NULL;
+    return (tokens);
+}
+
+/**
+ * exec_command - executes a command
+ * @args: array of arguments
+ */
+void exec_command(char **args)
+{
+    char *command_path = find_command(args[0]);
+
+    if (command_path == NULL)
+    {
+        fprintf(stderr, "%s: command not found\n", args[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    if (execve(command_path, args, NULL) == -1)
+    {
+        perror("Error");
+        exit(EXIT_FAILURE);
+    }
+}
+
+/**
+ * find_command - finds a command in the directories listed in PATH
+ * @command: the command to find
+ * Return: the full path to the command, or NULL if not found
+ */
+char *find_command(char *command)
+{
+    char *path = getenv("PATH");
+    char *dir = _strtok(path, ":");
+    while (dir != NULL)
+    {
+        char *full_path = malloc(strlen(dir) + strlen(command) + 2);
+        sprintf(full_path, "%s/%s", dir, command);
+        if (access(full_path, X_OK) == 0)
+        {
+            return full_path;
+        }
+        free(full_path);
+        dir = _strtok(NULL, ":");
+    }
+    return NULL;
+}
+
+/**
+ * execute_ls - executes the ls command
+ * @args: array of arguments
+ */
+void execute_ls(char **args)
+{
+    pid_t pid;
+    int status;
+
+    /* create a child process to execute the ls command */
+    pid = fork();
+    if (pid == -1)
+    {
+        perror("Error");
+        free(args);
+        return;
+    }
+    else if (pid == 0)
+    {
+        if (execvp(args[0], args) == -1)
+        {
+            perror("Error");
+            free(args);
+            exit(EXIT_FAILURE);
+        }
+    }
+    else
+    {
+        wait(&status);
+    }
+}
+
+/**
+ * _getline - reads an entire line from a file stream
+ * @lineptr: pointer to a buffer
+ * @n: pointer to the size of the buffer
+ * @stream: file stream to read from
+ * Return: number of bytes read, or -1 on failure
+ */
+ssize_t _getline(char **lineptr, size_t *n, FILE *stream)
+{
+    static char buffer[BUFFER_SIZE];
+    size_t len = 0;
+    char *new_line;
+    size_t linelen;
+    if (lineptr == NULL || n == NULL || stream == NULL)
+    {
+        return -1;
+    }
+
+    if (*lineptr == NULL)
+    {
+        *n = BUFFER_SIZE;
+        *lineptr = malloc(*n);
+        if (*lineptr == NULL)
+        {
+            return -1;
+        }
+    }
+
+    while (1)
+    {
+        char *newline = fgets(buffer, BUFFER_SIZE, stream);
+        if (newline == NULL)
+        {
+            break;
+        }
+
+        linelen = strlen(newline);
+        if (len + linelen >= *n)
+        {
+            *n *= 2;
+            new_line = realloc(*lineptr, *n);
+            if (new_line == NULL)
+            {
+                return -1;
+            }
+            *lineptr = new_line;
+        }
+
+        memcpy(*lineptr + len, newline, linelen);
+        len += linelen;
+
+        if (newline[linelen - 1] == '\n')
+        {
+            break;
+        }
+    }
+
+    (*lineptr)[len] = '\0';
+
+    return len;
+}
+
+/**
+ * _strtok - splits a string into tokens
+ * @str: string to split
+ * @delim: delimiter to split string by
+ * Return: pointer to the next token
+ */
+char *_strtok(char *str, const char *delim)
+{
+    static char *last = NULL;
+    char *tok = NULL;
+
+    if (str != NULL)
+    {
+        last = str;
+    }
+    else if (last == NULL)
+    {
+        return NULL;
+    }
+
+    tok = last;
+    while (*last != '\0')
+    {
+        if (strchr(delim, *last) != NULL)
+        {
+            *last++ = '\0';
+            break;
+        }
+        last++;
+    }
+
+    if (*tok == '\0')
+    {
+        return NULL;
+    }
+    else
+    {
+        return tok;
+    }
+}
+
+
+/**
+ * _setenv - sets an environment variable
+ * @args: array of arguments
+ * Return: void
+ */
+void _setenv(char **args)
+{
+    if (args[1] == NULL || args[2] == NULL)
+    {
+        fprintf(stderr, "Usage: setenv VARIABLE VALUE\n");
+        return;
+    }
+
+    if (setenv(args[1], args[2], 1) != 0)
+    {
+        perror("Error");
+    }
+}
+
+/**
+ * _unsetenv - unsets an environment variable
+ * @args: array of arguments
+ * Return: void
+ */
+void _unsetenv(char **args)
+{
+    if (args[1] == NULL)
+    {
+        fprintf(stderr, "Usage: unsetenv VARIABLE\n");
+        return;
+    }
+
+    if (unsetenv(args[1]) != 0)
+    {
+        perror("Error");
+    }
+}
+
+int _cd(char *path)
+{
+    char old_path[MAX_PATH];
+    char new_path[MAX_PATH];
+    if (getcwd(old_path, MAX_PATH) == NULL)
+    {
+        perror("getcwd");
+        return -1;
+    }
+
+    if (path == NULL)
+    {
+        path = getenv("HOME");
+        if (path == NULL)
+        {
+            perror("getenv");
+            return -1;
+        }
+    }
+
+    if (strcmp(path, "-") == 0)
+    {
+        path = getenv("OLDPWD");
+        if (path == NULL)
+        {
+            perror("getenv");
+            return -1;
+        }
+    }
+
+    if (chdir(path) == -1)
+    {
+        perror("chdir");
+        return -1;
+    }
+
+    if (getcwd(new_path, MAX_PATH) == NULL)
+    {
+        perror("getcwd");
+        return -1;
+    }
+
+    if (setenv("PWD", new_path, 1) == -1)
+    {
+        perror("setenv");
+        return -1;
+    }
+
+    if (setenv("OLDPWD", old_path, 1) == -1)
+    {
+        perror("setenv");
+        return -1;
+    }
+
+    return 0;
+}

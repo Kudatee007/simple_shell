@@ -9,7 +9,7 @@
 
 char **split_string(char *str, const char *delim, int *num_tokens) {
     char **tokens = NULL;
-    char *token;
+    
     int i = 0, j = 0, len = strlen(str);
 
     while (i < len) {
