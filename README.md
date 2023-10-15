@@ -18,8 +18,8 @@ Welcome to our shell collaboration project! This README will guide you through t
 
 ## Authors
 
-- [@Okoye Emmanuel Obiajulu](https://github.com/Obiajulu-gif/)
-- [@Timilehin Kudaisi](https://github.com/Kudatee007/)
+- [@Obiajulu Emmanuel okoye](https://github.com/Obiajulu-gif/)
+- [@Kudaisi Timilehin](https://github.com/Kudatee007/)
 
 ## Tech Stack
 
@@ -91,9 +91,8 @@ DocumentationThe documentation for this project is generated using Doxygen. You 
 
 ## Contributing
 
-Contributions are always welcome!
+Contributions are always welcome!!!
 
 See `contributing.md` for ways to get started.
 
 Please adhere to this project's `code of conduct`.
-

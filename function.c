@@ -9,18 +9,24 @@ char **split_line(char *line)
 {
     int bufsize = TOK_BUFSIZE, position = 0;
     char **tokens = malloc(bufsize * sizeof(char *));
-    char *token = NULL;
 
     if (!tokens)
     {
-        fprintf(stderr, "hsh: allocation error\n");
-        exit(EXIT_FAILURE);
+	    perror("hsh: allocation error");
+	    exit(EXIT_FAILURE);
     }
 
-    token = _strtok(line, TOK_DELIM);
+    char *token = _strtok(line, TOK_DELIM);
     while (token != NULL)
     {
-        tokens[position] = token;
+	    tokens[position] = strdup(token);
+
+        if (!tokens[position])
+        {
+            perror("hsh: allocation error");
+            exit(EXIT_FAILURE);
+        }
+
         position++;
 
         if (position >= bufsize)
@@ -29,14 +35,14 @@ char **split_line(char *line)
             tokens = realloc(tokens, bufsize * sizeof(char *));
             if (!tokens)
             {
-                fprintf(stderr, "hsh: allocation error\n");
+                perror("hsh: allocation error");
                 exit(EXIT_FAILURE);
             }
         }
         token = _strtok(NULL, TOK_DELIM);
     }
     tokens[position] = NULL;
-    return (tokens);
+    return tokens;
 }
 
 /**
@@ -72,7 +78,7 @@ char *find_command(char *command)
     while (dir != NULL)
     {
         char *full_path = malloc(strlen(dir) + strlen(command) + 2);
-        sprintf(full_path, "%s/%s", dir, command);
+        snprintf(full_path, strlen(dir) + strlen(command) + 2, "%s/%s", dir, command);
         if (access(full_path, X_OK) == 0)
         {
             return full_path;
@@ -87,77 +93,88 @@ char *find_command(char *command)
  * execute_ls - executes the ls command
  * @args: array of arguments
  */
+void execute_ls(char **args)
+{
+    if (args[1] == NULL)
+    {
+        char *current_directory = ".";
+        args[1] = current_directory;
+    }
+
+    _ls(args + 1);
+}
 
 void print_mode(mode_t mode)
 {
-    switch (mode & S_IFMT)
-    {
-    case S_IFBLK:
-        printf("b");
-        break;
-    case S_IFCHR:
-        printf("c");
-        break;
-    case S_IFDIR:
-        printf("d");
-        break;
-    case S_IFIFO:
-        printf("p");
-        break;
-    case S_IFLNK:
-        printf("l");
-        break;
-    case S_IFREG:
-        printf("-");
-        break;
-    case S_IFSOCK:
-        printf("s");
-        break;
-    default:
-        printf("?");
-        break;
-    }
-    printf((mode & S_IRUSR) ? "r" : "-");
-    printf((mode & S_IWUSR) ? "w" : "-");
-    printf((mode & S_IXUSR) ? "x" : "-");
-    printf((mode & S_IRGRP) ? "r" : "-");
-    printf((mode & S_IWGRP) ? "w" : "-");
-    printf((mode & S_IXGRP) ? "x" : "-");
-    printf((mode & S_IROTH) ? "r" : "-");
-    printf((mode & S_IWOTH) ? "w" : "-");
-    printf((mode & S_IXOTH) ? "x" : "-");
+	switch (mode & S_IFMT)
+	{
+	case S_IFBLK:
+		printf("b");
+		break;
+	case S_IFCHR:
+		printf("c");
+		break;
+	case S_IFDIR:
+		printf("d");
+		break;
+	case S_IFIFO:
+		printf("p");
+		break;
+	case S_IFLNK:
+		printf("l");
+		break;
+	case S_IFREG:
+		printf("-");
+		break;
+	case S_IFSOCK:
+		printf("s");
+		break;
+	default:
+		printf("?");
+		break;
+	}
+	printf((mode & S_IRUSR) ? "r" : "-");
+	printf((mode & S_IWUSR) ? "w" : "-");
+	printf((mode & S_IXUSR) ? "x" : "-");
+	printf((mode & S_IRGRP) ? "r" : "-");
+	printf((mode & S_IWGRP) ? "w" : "-");
+	printf((mode & S_IXGRP) ? "x" : "-");
+	printf((mode & S_IROTH) ? "r" : "-");
+	printf((mode & S_IWOTH) ? "w" : "-");
+	printf((mode & S_IXOTH) ? "x" : "-");
 }
+
 
 void _ls(char **path)
 {
-    char *name;
-    char full_path[PATH_MAX];
-    struct stat st;
-    struct dirent *entry;
-    DIR *dir = opendir(*path);
-    if (dir == NULL)
-    {
-        perror("opendir");
-        exit(1);
-    }
-    while ((entry = readdir(dir)) != NULL)
-    {
-        name = entry->d_name;
-        if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0)
-        {
-            continue;
-        }
-        sprintf(full_path, "%s/%s", *path, name);
-        if (lstat(full_path, &st) == -1)
-        {
-            perror("lstat");
-            exit(1);
-        }
-        print_mode(st.st_mode);
-        printf(" %ld ", st.st_size);
-        printf("%s\n", name);
-    }
-    closedir(dir);
+	char *name;
+	char full_path[PATH_MAX];
+	struct stat st;
+	struct dirent *entry;
+	DIR *dir = opendir(*path);
+	if (dir == NULL)
+	{
+		perror("opendir");
+		exit(1);
+	}
+	while ((entry = readdir(dir)) != NULL)
+	{
+		name = entry->d_name;
+		if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0)
+		{
+			continue;
+		}
+		sprintf(full_path, "%s/%s", *path, name);
+		if (lstat(full_path, &st) == -1)
+		{
+			perror("lstat");
+			exit(1);
+		}
+		print_mode(st.st_mode);
+		printf(" %ld ", st.st_size);
+		printf("%s\n", name);
+	}
+	closedir(dir);
 }
 
 /**
@@ -169,57 +186,57 @@ void _ls(char **path)
  */
 ssize_t _getline(char **lineptr, size_t *n, FILE *stream)
 {
-    static char buffer[BUFFER_SIZE];
-    size_t len = 0;
-    char *new_line;
-    size_t linelen;
-    if (lineptr == NULL || n == NULL || stream == NULL)
-    {
-        return -1;
-    }
+	static char buffer[BUFFER_SIZE];
+	size_t len = 0;
+	char *new_line;
+	size_t linelen;
+	if (lineptr == NULL || n == NULL || stream == NULL)
+	{
+		return -1;
+	}
 
-    if (*lineptr == NULL)
-    {
-        *n = BUFFER_SIZE;
-        *lineptr = malloc(*n);
-        if (*lineptr == NULL)
-        {
-            return -1;
-        }
-    }
+	if (*lineptr == NULL)
+	{
+		*n = BUFFER_SIZE;
+		*lineptr = malloc(*n);
+		if (*lineptr == NULL)
+		{
+			return -1;
+		}
+	}
 
-    while (1)
-    {
-        char *newline = fgets(buffer, BUFFER_SIZE, stream);
-        if (newline == NULL)
-        {
-            break;
-        }
+	while (1)
+	{
+		char *newline = fgets(buffer, BUFFER_SIZE, stream);
+		if (newline == NULL)
+		{
+			break;
+		}
 
-        linelen = strlen(newline);
-        if (len + linelen >= *n)
-        {
-            *n *= 2;
-            new_line = realloc(*lineptr, *n);
-            if (new_line == NULL)
-            {
-                return -1;
-            }
-            *lineptr = new_line;
-        }
+		linelen = strlen(newline);
+		if (len + linelen >= *n)
+		{
+			*n *= 2;
+			new_line = realloc(*lineptr, *n);
+			if (new_line == NULL)
+			{
+				return -1;
+			}
+			*lineptr = new_line;
+		}
 
-        memcpy(*lineptr + len, newline, linelen);
-        len += linelen;
+		memcpy(*lineptr + len, newline, linelen);
+		len += linelen;
 
-        if (newline[linelen - 1] == '\n')
-        {
-            break;
-        }
-    }
+		if (newline[linelen - 1] == '\n')
+		{
+			break;
+		}
+	}
 
-    (*lineptr)[len] = '\0';
+	(*lineptr)[len] = '\0';
 
-    return len;
+	return len;
 }
 
 /**
@@ -230,37 +247,37 @@ ssize_t _getline(char **lineptr, size_t *n, FILE *stream)
  */
 char *_strtok(char *str, const char *delim)
 {
-    static char *last = NULL;
-    char *tok = NULL;
+	static char *last = NULL;
+	char *tok = NULL;
 
-    if (str != NULL)
-    {
-        last = str;
-    }
-    else if (last == NULL)
-    {
-        return NULL;
-    }
+	if (str != NULL)
+	{
+		last = str;
+	}
+	else if (last == NULL)
+	{
+		return NULL;
+	}
 
-    tok = last;
-    while (*last != '\0')
-    {
-        if (strchr(delim, *last) != NULL)
-        {
-            *last++ = '\0';
-            break;
-        }
-        last++;
-    }
+	tok = last;
+	while (*last != '\0')
+	{
+		if (strchr(delim, *last) != NULL)
+		{
+			*last++ = '\0';
+			break;
+		}
+		last++;
+	}
 
-    if (*tok == '\0')
-    {
-        return NULL;
-    }
-    else
-    {
-        return tok;
-    }
+	if (*tok == '\0')
+	{
+		return NULL;
+	}
+	else
+	{
+		return tok;
+	}
 }
 
 /**
@@ -270,16 +287,16 @@ char *_strtok(char *str, const char *delim)
  */
 void _setenv(char **args)
 {
-    if (args[1] == NULL || args[2] == NULL)
-    {
-        fprintf(stderr, "Usage: setenv VARIABLE VALUE\n");
-        return;
-    }
+	if (args[1] == NULL || args[2] == NULL)
+	{
+		fprintf(stderr, "Usage: setenv VARIABLE VALUE\n");
+		return;
+	}
 
-    if (setenv(args[1], args[2], 1) != 0)
-    {
-        perror("Error");
-    }
+	if (setenv(args[1], args[2], 1) != 0)
+	{
+		perror("Error");
+	}
 }
 
 /**
@@ -289,16 +306,16 @@ void _setenv(char **args)
  */
 void _unsetenv(char **args)
 {
-    if (args[1] == NULL)
-    {
-        fprintf(stderr, "Usage: unsetenv VARIABLE\n");
-        return;
-    }
+	if (args[1] == NULL)
+	{
+		fprintf(stderr, "Usage: unsetenv VARIABLE\n");
+		return;
+	}
 
-    if (unsetenv(args[1]) != 0)
-    {
-        perror("Error");
-    }
+	if (unsetenv(args[1]) != 0)
+	{
+		perror("Error");
+	}
 }
 
 /**
@@ -358,6 +375,67 @@ int _cd(char *path)
     {
         perror("setenv");
         return -1;
+    }
+
+    return 0;
+}
+
+int main(void)
+{
+    char *line;
+    size_t len = 0;
+    ssize_t read;
+
+    while (1)
+    {
+        printf("$ ");
+        read = _getline(&line, &len, stdin);
+
+        if (read == -1)
+        {
+            perror("Error reading line");
+            exit(EXIT_FAILURE);
+        }
+
+        if (read == 0)
+        {
+            break; // EOF
+        }
+
+        char **args = split_line(line);
+        if (args[0] != NULL)
+        {
+            if (strcmp(args[0], "exit") == 0)
+            {
+                free(line);
+                free(args);
+                exit(EXIT_SUCCESS);
+            }
+
+            if (strcmp(args[0], "cd") == 0)
+            {
+                _cd(args[1]);
+            }
+            else if (strcmp(args[0], "setenv") == 0)
+            {
+                _setenv(args);
+            }
+            else if (strcmp(args[0], "unsetenv") == 0)
+            {
+                _unsetenv(args);
+            }
+            else if (strcmp(args[0], "ls") == 0)
+            {
+                execute_ls(args);
+            }
+            else
+            {
+                exec_command(args);
+            }
+        }
+
+        free(line);
+        free(args);
     }
 
     return 0;
