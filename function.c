@@ -9,7 +9,13 @@ char **split_line(char *line)
 {
     int bufsize = TOK_BUFSIZE, position = 0;
     char **tokens = malloc(bufsize * sizeof(char *));
+<<<<<<< HEAD
 
+=======
+    char *token = NULL;
+    int reallocated = 0;
+    char **temp;
+>>>>>>> fe20ff6 (Task 0 to 10 fix)
     if (!tokens)
     {
 	    perror("hsh: allocation error");
@@ -32,16 +38,31 @@ char **split_line(char *line)
         if (position >= bufsize)
         {
             bufsize += TOK_BUFSIZE;
-            tokens = realloc(tokens, bufsize * sizeof(char *));
-            if (!tokens)
+            temp = realloc(tokens, bufsize * sizeof(char *));
+            if (!temp)
             {
+<<<<<<< HEAD
                 perror("hsh: allocation error");
+=======
+                fprintf(stderr, "hsh: reallocation error\n");
+                free(tokens);
+>>>>>>> fe20ff6 (Task 0 to 10 fix)
                 exit(EXIT_FAILURE);
             }
+            tokens = temp;
+            reallocated = 1; 
         }
         token = _strtok(NULL, TOK_DELIM);
     }
+
     tokens[position] = NULL;
+<<<<<<< HEAD
+=======
+
+    if (reallocated)
+        free(tokens);
+
+>>>>>>> fe20ff6 (Task 0 to 10 fix)
     return tokens;
 }
 
@@ -147,6 +168,7 @@ void print_mode(mode_t mode)
 
 void _ls(char **path)
 {
+<<<<<<< HEAD
 	char *name;
 	char full_path[PATH_MAX];
 	struct stat st;
@@ -175,6 +197,36 @@ void _ls(char **path)
 		printf("%s\n", name);
 	}
 	closedir(dir);
+=======
+    char *name;
+    char full_path[PATH_MAX];
+    struct stat st;
+    struct dirent *entry;
+    DIR *dir = opendir(*path);
+    if (dir == NULL)
+    {
+        perror("opendir");
+        exit(1);
+    }
+    while ((entry = readdir(dir)) != NULL)
+    {
+        name = entry->d_name;
+        if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0)
+        {
+            continue;
+        }
+        sprintf(full_path, "%s/%s", *path, name);
+        if (lstat(full_path, &st) == -1)
+        {
+            perror("lstat");
+            continue;
+        }
+        print_mode(st.st_mode);
+        printf(" %ld ", st.st_size);
+        printf("%s\n", name);
+    }
+    closedir(dir);
+>>>>>>> fe20ff6 (Task 0 to 10 fix)
 }
 
 /**
@@ -186,6 +238,7 @@ void _ls(char **path)
  */
 ssize_t _getline(char **lineptr, size_t *n, FILE *stream)
 {
+<<<<<<< HEAD
 	static char buffer[BUFFER_SIZE];
 	size_t len = 0;
 	char *new_line;
@@ -194,6 +247,18 @@ ssize_t _getline(char **lineptr, size_t *n, FILE *stream)
 	{
 		return -1;
 	}
+=======
+    char *buffer = NULL;
+    size_t len = 0;
+    ssize_t linelen;
+/*     ssize_t read;
+ */
+    if (lineptr == NULL || n == NULL)
+    {
+        errno = EINVAL;
+        return -1;
+    }
+>>>>>>> fe20ff6 (Task 0 to 10 fix)
 
 	if (*lineptr == NULL)
 	{
@@ -205,6 +270,7 @@ ssize_t _getline(char **lineptr, size_t *n, FILE *stream)
 		}
 	}
 
+<<<<<<< HEAD
 	while (1)
 	{
 		char *newline = fgets(buffer, BUFFER_SIZE, stream);
@@ -237,8 +303,38 @@ ssize_t _getline(char **lineptr, size_t *n, FILE *stream)
 	(*lineptr)[len] = '\0';
 
 	return len;
-}
+=======
+    buffer = NULL; 
+    linelen = getdelim(&buffer, &len, '\n', stream);
+    if (linelen == -1)
+    {
+        free(buffer);
+        return -1;
+    }
 
+    if (linelen > 0 && buffer[linelen - 1] == '\n')
+    {
+        buffer[linelen - 1] = '\0';
+        linelen--;
+    }
+
+    if (linelen >= (ssize_t)*n)
+    {
+        *n = linelen + 1;
+        *lineptr = realloc(*lineptr, *n);
+        if (*lineptr == NULL)
+        {
+            free(buffer);
+            return -1;
+        }
+    }
+
+    memcpy(*lineptr, buffer, linelen + 1);
+    free(buffer);
+
+    return linelen;
+>>>>>>> fe20ff6 (Task 0 to 10 fix)
+}
 /**
  * _strtok - splits a string into tokens
  * @str: string to split

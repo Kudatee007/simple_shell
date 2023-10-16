@@ -42,6 +42,7 @@ int main(int argc, char **argv)
 		/* print the prompt */
 		printf("#cisfun%s$ ", dir);
 
+<<<<<<< HEAD
 		/* read a line from stdin */
 		read = _getline(&line, &len, stdin);
 		/* check for EOF or error */
@@ -80,6 +81,76 @@ int main(int argc, char **argv)
 				}
 				exit(status);
 			}
+=======
+        /* read a line from stdin */
+        read = getline(&line, &len, stdin);
+        /* check for EOF or error */
+        if (read == -1)
+        {
+            printf("\n");
+            break;
+        }
+        if (read > 1)
+        {
+            /* remove the newline character */
+            line[read - 1] = '\0';
+            /* split the line into arguments */
+            args = split_line(line);
+            if (args == NULL)
+            {
+                fprintf(stderr, "Error: Failed to split the input line.\n");
+                free(line);
+                free(args);
+                continue;
+            }
+
+            if (strcmp(args[0], "ls") == 0)
+            {
+                pid_t pid;
+                 /* if the command is "ls", use the full path to the command */
+                char *full_path = "/bin/ls";
+                args[0] = full_path;
+                 pid = fork();
+                if (pid == -1)
+                {
+                    perror("fork");
+                    exit(EXIT_FAILURE);
+                }
+                else if (pid == 0)
+                {
+                    /* child process */
+                    if (execv(full_path, args) == -1)
+                    {
+                        perror("execv");
+                        exit(EXIT_FAILURE);
+                    }
+                }
+                else
+                {
+                    /* parent process */
+                    int status;
+                    if (waitpid(pid, &status, 0) == -1)
+                    {
+                        perror("waitpid");
+                        exit(EXIT_FAILURE);
+                    }
+                    free(args);
+                }
+                free(line);
+                continue;
+            }
+            if (strcmp(args[0], "exit") == 0)
+            {
+                int status = 0;
+
+                if (args[1] != NULL)
+                {
+                    status = atoi(args[1]);
+                }
+                free(args);
+                exit(status);
+            }
+>>>>>>> fe20ff6 (Task 0 to 10 fix)
 
 			if (strcmp(args[0], "env") == 0)
 			{
@@ -96,6 +167,7 @@ int main(int argc, char **argv)
 			{
 				_cd(args[1]);
 
+<<<<<<< HEAD
 				/* free the arguments */
 				free(args);
 				continue;
@@ -150,4 +222,62 @@ int main(int argc, char **argv)
 	}
 
 	return (0);
+=======
+                /* free the arguments */
+                free(args);
+                continue;
+            }
+            if (strcmp(args[0], "setenv") == 0)
+            {
+                _setenv(args);
+                free(args);
+                continue;
+            }
+            if (strcmp(args[0], "unsetenv") == 0)
+            {
+                _unsetenv(args);
+                free(args);
+                continue;
+            }
+            command = find_command(args[0]);
+            /* find the full path of the command **before** creating a child process */
+            if (command == NULL) /* check if the command is not found */
+            {
+                fprintf(stderr, "%s: command not found\n", args[0]); /* print error message */
+                free(args);
+                free(command);
+                continue; /* skip to next iteration */
+            }
+
+            /* create a child process to execute the command */
+            pid = fork();
+            if (pid == -1)
+            {
+                perror("Error");
+                free(args);
+                continue;
+            }
+            else if (pid == 0)
+            {
+                if (execvp(args[0], args) == -1)
+                {
+                    perror("Error");
+                    exit(EXIT_FAILURE);
+                }
+                free(command);
+                free(args);
+            }
+            else
+            {
+                /* wait for the child process to complete */
+                wait(NULL);
+                /* free the arguments */
+                free(args);
+            }
+            free(line);
+        }
+    }
+
+    return 0;
+>>>>>>> fe20ff6 (Task 0 to 10 fix)
 }
