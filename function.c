@@ -7,16 +7,16 @@
  */
 char **split_line(char *line)
 {
+    char *token;
     int bufsize = TOK_BUFSIZE, position = 0;
     char **tokens = malloc(bufsize * sizeof(char *));
-
     if (!tokens)
     {
 	    perror("hsh: allocation error");
 	    exit(EXIT_FAILURE);
     }
 
-    char *token = _strtok(line, TOK_DELIM);
+    token = _strtok(line, TOK_DELIM);
     while (token != NULL)
     {
 	    tokens[position] = strdup(token);
@@ -32,15 +32,18 @@ char **split_line(char *line)
         if (position >= bufsize)
         {
             bufsize += TOK_BUFSIZE;
-            tokens = realloc(tokens, bufsize * sizeof(char *));
-            if (!tokens)
+            temp = realloc(tokens, bufsize * sizeof(char *));
+            if (!temp)
             {
                 perror("hsh: allocation error");
                 exit(EXIT_FAILURE);
             }
+            tokens = temp;
+            reallocated = 1; 
         }
         token = _strtok(NULL, TOK_DELIM);
     }
+
     tokens[position] = NULL;
     return tokens;
 }
@@ -238,7 +241,6 @@ ssize_t _getline(char **lineptr, size_t *n, FILE *stream)
 
 	return len;
 }
-
 /**
  * _strtok - splits a string into tokens
  * @str: string to split
@@ -380,63 +382,3 @@ int _cd(char *path)
     return 0;
 }
 
-int main(void)
-{
-    char *line;
-    size_t len = 0;
-    ssize_t read;
-
-    while (1)
-    {
-        printf("$ ");
-        read = _getline(&line, &len, stdin);
-
-        if (read == -1)
-        {
-            perror("Error reading line");
-            exit(EXIT_FAILURE);
-        }
-
-        if (read == 0)
-        {
-            break; // EOF
-        }
-
-        char **args = split_line(line);
-        if (args[0] != NULL)
-        {
-            if (strcmp(args[0], "exit") == 0)
-            {
-                free(line);
-                free(args);
-                exit(EXIT_SUCCESS);
-            }
-
-            if (strcmp(args[0], "cd") == 0)
-            {
-                _cd(args[1]);
-            }
-            else if (strcmp(args[0], "setenv") == 0)
-            {
-                _setenv(args);
-            }
-            else if (strcmp(args[0], "unsetenv") == 0)
-            {
-                _unsetenv(args);
-            }
-            else if (strcmp(args[0], "ls") == 0)
-            {
-                execute_ls(args);
-            }
-            else
-            {
-                exec_command(args);
-            }
-        }
-
-        free(line);
-        free(args);
-    }
-
-    return 0;
-}

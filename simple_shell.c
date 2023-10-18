@@ -68,6 +68,32 @@ int main(int argc, char **argv)
                     exit(EXIT_FAILURE);
                 }
             }
+		/* read a line from stdin */
+		read = getline(&line, &len, stdin);
+		/* check for EOF or error */
+		if (read == -1)
+		{
+			printf("\n");
+			break;
+		}
+		if (read > 1)
+		{
+			/* remove the newline character */
+			line[read - 1] = '\0';
+			/* split the line into arguments */
+			args = split_line(line);
+
+			if (strcmp(args[0], "ls") == 0)
+			{
+				/* if the command is "ls", use the full path to the command */
+				char *full_path = "/bin/ls";
+				if (execv(full_path, args) == -1)
+				{
+					perror("Error");
+					free(args);
+					exit(EXIT_FAILURE);
+				}
+			}
 
             if (strcmp(args[0], "exit") == 0)
             {
